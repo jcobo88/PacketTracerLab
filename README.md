@@ -2,196 +2,118 @@
 
 ## Overview
 
-This project is a multi-network Cisco Packet Tracer lab I built to practice configuring, testing, and troubleshooting common switching, routing, network services, and security technologies.
+I built this lab to practice configuring and troubleshooting a network that grew beyond a basic router-and-switch exercise.
 
-The lab started as a small two-VLAN network with a single router and switch. I continued expanding it as I learned new concepts, eventually adding multiple routers, additional VLANs, centralized DHCP and DNS services, OSPF, NAT/PAT, an Internet-facing connection, port forwarding, SSH management, port security, ACLs, and redundant switch links using STP.
+I started with two VLANs on a single switch and router. As I worked through the lab, I added more networks, a second router, centralized DHCP and DNS, OSPF, NAT/PAT, an ISP connection, SSH management, ACLs, port security, an internal web server, and redundant switch links with STP.
 
-I intentionally broke working configurations throughout the project so I could practice identifying where communication was failing instead of only following configuration steps.
+I also intentionally broke working configurations along the way. I wanted to get used to looking at the symptoms first and figuring out whether a problem was at Layer 2, Layer 3, routing, DNS, DHCP, NAT, or access control instead of immediately changing configuration.
 
-The completed lab includes:
+### Main areas covered
 
-- VLAN segmentation
+- VLANs
 - 802.1Q trunking
 - Router-on-a-stick
 - Inter-VLAN routing
 - DHCP
 - DHCP relay
 - DNS
-- SSH switch management
-- Standard and extended ACLs
-- Port security
 - Static routing
-- Default routing
+- Default routes
 - OSPF
-- NAT/PAT
+- NAT and PAT
+- Static PAT / port forwarding
+- Standard and extended ACLs
+- SSH management
+- Port security
 - HTTP services
-- Static PAT and port forwarding
-- Internet-edge traffic filtering
-- STP redundancy and failover
+- STP
 - Layer 2 and Layer 3 troubleshooting
-- End-to-end validation
-
-The repository contains the completed Packet Tracer file, six exported Cisco device configurations, and 64 screenshots documenting the build, failures, troubleshooting, repairs, and final validation.
 
 ---
 
-## Repository Contents
+## Lab Files
 
-```text
-packet-tracer-networking-lab/
-├── README.md
-├── packet_tracer_networking_lab.pkt
-├── Configs/
-│   ├── ISP01.txt
-│   ├── ROUTER01.txt
-│   ├── ROUTER02.txt
-│   ├── SWITCH01.txt
-│   ├── SWITCH02.txt
-│   ├── SWITCH03.txt
-│   └── readme.md
-└── screenshots/
-    ├── 01-network-topology.png
-    ├── ...
-    └── 64-final-validation-ssh-management.png
-```
+The repository includes the completed Packet Tracer topology and the running configurations from the Cisco devices.
 
-### Lab Files
-
-- [Completed Packet Tracer Lab](./packet_tracer_networking_lab.pkt)
+- [Packet Tracer Lab](packet_tracer_networking_lab.pkt)
 - [ISP01 Configuration](Configs/ISP01.txt)
 - [ROUTER01 Configuration](Configs/ROUTER01.txt)
 - [ROUTER02 Configuration](Configs/ROUTER02.txt)
 - [SWITCH01 Configuration](Configs/SWITCH01.txt)
 - [SWITCH02 Configuration](Configs/SWITCH02.txt)
 - [SWITCH03 Configuration](Configs/SWITCH03.txt)
-- [Screenshots](screenshots/)
 
 ---
 
-# Final Network Design
+## Final Network
 
-The topology grew throughout the project. The completed design contains an internal multi-VLAN network, two internal routers, centralized network services, redundant switching, remote networks, and a simulated ISP/Internet connection.
+![Final network topology](screenshots/01-network-topology.png)
+
+The finished network contains four internal VLANs, two internal routers, a simulated ISP, two remote networks, centralized DHCP and DNS services, internal and external web servers, and redundant Layer 2 links.
 
 ```text
-                               INTERNET-SERVER
-                                198.51.100.10
-                                       |
-                              198.51.100.0/24
-                                       |
-                              G0/1 198.51.100.1
-                                    ISP01
-                              G0/0 203.0.113.1
-                                       |
-                               203.0.113.0/30
-                                       |
-                              G0/2 203.0.113.2
-                                   ROUTER01
-                         _____________|_______________
-                        /                             \
-               G0/0 802.1Q trunk                 G0/1 10.0.0.1/30
-                       |                             |
-                    SWITCH01                  10.0.0.0/30
-                  _____|_______                      |
-                 /     |       \                G0/0 10.0.0.2
-                /      |        \                  ROUTER02
-          VLAN 10   VLAN 20   VLAN 50            /        \
-             IT       SALES       HR       G0/1 192.168.30.1
-              |         |         |                 |
-        IT devices  Sales PCs   PC-HR01          SWITCH02
-              |                           _________|_________
-       INTERNAL-WEB                    /                     \
-       192.168.10.20          PC-REMOTE01              DHCP/DNS SERVER
-                              192.168.30.10             192.168.30.20
+                          INTERNET-SERVER
+                           198.51.100.10
+                                  |
+                               ISP01
+                           203.0.113.1
+                                  |
+                           203.0.113.0/30
+                                  |
+                           203.0.113.2
+                             ROUTER01
+                         /             \
+                802.1Q trunk          10.0.0.1
+                    |                   |
+                 SWITCH01          10.0.0.0/30
+              /     |     |             |
+           VLAN10 VLAN20 VLAN50      10.0.0.2
+               IT   SALES   HR        ROUTER02
+                                     /       \
+                             192.168.30.0    192.168.40.0
+                                   |
+                            DHCP / DNS Server
+                              192.168.30.20
 
-
-                                              G0/2 192.168.40.1
-                                                     |
-                                               PC-REMOTE02
-                                               192.168.40.10
-
-
-                    SWITCH01
-              Management SVI:
-                  VLAN 99
-               192.168.99.2
-        Default Gateway: 192.168.99.1
-
-                 /             \
-         Fa0/23 trunk       Fa0/24 trunk
-               \               /
-                \             /
+                   SWITCH01
+                      |
+            two redundant trunks
+                      |
                    SWITCH03
                       |
-               Fa0/1 VLAN 10
-                      |
                   PC-STP01
-               192.168.10.30
 ```
-
-The two links between SWITCH01 and SWITCH03 provide Layer 2 redundancy. STP keeps one path forwarding while the other remains available as a backup.
 
 ---
 
-## ROUTER01 802.1Q Trunk
+## Addressing
 
-The link between SWITCH01 and ROUTER01 carries VLANs 10, 20, 50, and 99 over a single physical interface using 802.1Q tagging.
+| Network | Purpose | Gateway |
+|---|---|---|
+| `192.168.10.0/24` | IT | `192.168.10.1` |
+| `192.168.20.0/24` | Sales | `192.168.20.1` |
+| `192.168.50.0/24` | HR | `192.168.50.1` |
+| `192.168.99.0/24` | Management | `192.168.99.1` |
+| `10.0.0.0/30` | ROUTER01 ↔ ROUTER02 | Point-to-point |
+| `192.168.30.0/24` | Remote LAN / Services | `192.168.30.1` |
+| `192.168.40.0/24` | Second Remote LAN | `192.168.40.1` |
+| `203.0.113.0/30` | ROUTER01 ↔ ISP01 | Point-to-point |
+| `198.51.100.0/24` | Simulated Internet | `198.51.100.1` |
+
+Important infrastructure addresses:
 
 ```text
-ROUTER01 G0/0
-├── G0/0.10 -> VLAN 10 -> 192.168.10.1/24
-├── G0/0.20 -> VLAN 20 -> 192.168.20.1/24
-├── G0/0.50 -> VLAN 50 -> 192.168.50.1/24
-└── G0/0.99 -> VLAN 99 -> 192.168.99.1/24
+SWITCH01 management:  192.168.99.2
+DHCP/DNS server:      192.168.30.20
+INTERNAL-WEB:         192.168.10.20
+INTERNET-SERVER:      198.51.100.10
 ```
 
-SWITCH01 `Gi0/1` is configured as an 802.1Q trunk to ROUTER01.
-
-This router-on-a-stick design allows several VLANs to use a single physical router interface while maintaining separate logical Layer 3 gateways.
-
 ---
 
-# Addressing Plan
+# 1. VLANs and Inter-VLAN Routing
 
-| Network / Device | Address | Purpose |
-| --- | --- | --- |
-| VLAN 10 | `192.168.10.0/24` | IT network |
-| ROUTER01 G0/0.10 | `192.168.10.1/24` | IT default gateway |
-| PC-IT01 | `192.168.10.10` | IT workstation |
-| PC-IT02 | `192.168.10.11` | IT workstation |
-| INTERNAL-WEB | `192.168.10.20` | Internal HTTP server |
-| PC-STP01 | `192.168.10.30` | STP redundancy test client |
-| VLAN 20 | `192.168.20.0/24` | Sales network |
-| ROUTER01 G0/0.20 | `192.168.20.1/24` | Sales default gateway |
-| PC-SALES01 | `192.168.20.10` | Sales workstation |
-| PC-SALES02 | `192.168.20.11` | Sales workstation |
-| VLAN 50 | `192.168.50.0/24` | HR network |
-| ROUTER01 G0/0.50 | `192.168.50.1/24` | HR gateway / DHCP relay interface |
-| PC-HR01 | `192.168.50.10` | HR workstation |
-| VLAN 99 | `192.168.99.0/24` | Management network |
-| ROUTER01 G0/0.99 | `192.168.99.1/24` | Management gateway |
-| SWITCH01 VLAN 99 SVI | `192.168.99.2/24` | Switch management address |
-| Router transit | `10.0.0.0/30` | ROUTER01-to-ROUTER02 link |
-| ROUTER01 G0/1 | `10.0.0.1/30` | Transit interface |
-| ROUTER02 G0/0 | `10.0.0.2/30` | Transit interface |
-| Remote LAN | `192.168.30.0/24` | Remote network behind ROUTER02 |
-| ROUTER02 G0/1 | `192.168.30.1/24` | Remote LAN gateway |
-| PC-REMOTE01 | `192.168.30.10` | Remote workstation |
-| DHCP/DNS SERVER | `192.168.30.20` | Central DHCP and DNS server |
-| Remote LAN 2 | `192.168.40.0/24` | Second remote network |
-| ROUTER02 G0/2 | `192.168.40.1/24` | Remote LAN 2 gateway |
-| PC-REMOTE02 | `192.168.40.10` | Remote workstation |
-| ISP transit | `203.0.113.0/30` | ROUTER01-to-ISP connection |
-| ISP01 G0/0 | `203.0.113.1/30` | ISP-side transit interface |
-| ROUTER01 G0/2 | `203.0.113.2/30` | Public-facing NAT interface |
-| Internet LAN | `198.51.100.0/24` | Simulated Internet network |
-| ISP01 G0/1 | `198.51.100.1/24` | Internet LAN gateway |
-| INTERNET-SERVER | `198.51.100.10` | External HTTP test server |
-
----
-
-# VLAN Segmentation
-
-I initially created separate VLANs for the IT and Sales departments and later added HR and Management.
+I started by separating IT and Sales into different VLANs and later added HR and Management.
 
 ```text
 VLAN 10 - IT
@@ -200,118 +122,57 @@ VLAN 50 - HR
 VLAN 99 - MANAGEMENT
 ```
 
-Important SWITCH01 access-port assignments include:
-
-```text
-Fa0/1 -> VLAN 10 -> PC-IT01
-Fa0/2 -> VLAN 10 -> PC-IT02
-Fa0/3 -> VLAN 20 -> PC-SALES01
-Fa0/4 -> VLAN 20 -> PC-SALES02
-Fa0/5 -> VLAN 50 -> PC-HR01
-Fa0/6 -> VLAN 10 -> INTERNAL-WEB
-```
-
-Separating the departments into VLANs gives each department its own Layer 2 broadcast domain even though the devices share the same physical switch.
-
-![VLAN Configuration](screenshots/02-vlan-configuration.png)
-
----
-
-# 802.1Q Trunking and Router-on-a-Stick
-
-SWITCH01 connects to ROUTER01 using an 802.1Q trunk on `Gi0/1`.
-
-Instead of dedicating a separate physical router interface to every VLAN, ROUTER01 uses logical subinterfaces on `G0/0`.
-
-```text
-G0/0.10 -> VLAN 10 -> 192.168.10.1
-G0/0.20 -> VLAN 20 -> 192.168.20.1
-G0/0.50 -> VLAN 50 -> 192.168.50.1
-G0/0.99 -> VLAN 99 -> 192.168.99.1
-```
-
-Each subinterface uses an 802.1Q VLAN ID so ROUTER01 can identify the VLAN associated with tagged traffic arriving over the trunk.
+![VLAN configuration](screenshots/02-vlan-configuration.png)
 
 Before routing was configured, hosts in different VLANs could not communicate.
 
-![VLAN Segmentation](screenshots/03-vlan-connectivity-test.png)
+![VLAN connectivity test](screenshots/03-vlan-connectivity-test.png)
 
-After the trunk and router subinterfaces were configured, inter-VLAN communication worked.
+I configured `Gi0/1` on SWITCH01 as a trunk to ROUTER01 and created router subinterfaces.
 
-![Inter-VLAN Routing](screenshots/04-inter-vlan-routing-verified.png)
+```text
+G0/0.10 -> 192.168.10.1
+G0/0.20 -> 192.168.20.1
+G0/0.50 -> 192.168.50.1
+G0/0.99 -> 192.168.99.1
+```
+
+Each subinterface was tagged for its VLAN using 802.1Q.
+
+After that, the VLANs could route through ROUTER01.
+
+![Inter-VLAN routing verified](screenshots/04-inter-vlan-routing-verified.png)
 
 ---
 
-# DHCP
+# 2. DHCP
 
-## Local DHCP
+ROUTER01 initially provided DHCP for the IT and Sales VLANs.
 
-ROUTER01 provides DHCP for the IT and Sales networks.
+The pools supplied the correct:
 
 ```text
-IT
-Network: 192.168.10.0/24
-Gateway: 192.168.10.1
-DNS: 192.168.30.20
-
-SALES
-Network: 192.168.20.0/24
-Gateway: 192.168.20.1
-DNS: 192.168.30.20
+IP address
+Subnet mask
+Default gateway
+DNS server
 ```
 
-Infrastructure addresses `.1` through `.9` are excluded from the IT and Sales DHCP pools.
+I checked the client configuration after requesting an address.
 
-Clients successfully received addresses from the correct network.
+![DHCP client configuration](screenshots/05-dhcp-client-configuration.png)
 
-![DHCP Client](screenshots/05-dhcp-client-configuration.png)
+I also checked the router's DHCP bindings instead of relying only on the workstation.
 
-![DHCP Bindings](screenshots/06-dhcp-bindings.png)
+![DHCP bindings](screenshots/06-dhcp-bindings.png)
 
 ---
 
-# Centralized DHCP and DHCP Relay
+# 3. ACL Between Sales and IT
 
-I later added a centralized DHCP/DNS server at:
+I wanted Sales and IT to remain routed but have some traffic restrictions.
 
-```text
-192.168.30.20
-```
-
-The server is located on a different subnet behind ROUTER02.
-
-I created VLAN 50 for HR and configured the following on ROUTER01's `G0/0.50` subinterface:
-
-```text
-ip helper-address 192.168.30.20
-```
-
-A DHCP Discover begins as a broadcast on the client's local network. Routers normally do not forward these broadcasts between subnets, so PC-HR01 could not directly reach the DHCP server on `192.168.30.0/24`.
-
-The helper address allows ROUTER01 to relay the DHCP request to the centralized server.
-
-I first tested HR before the relay was working and confirmed the DHCP request failed.
-
-![DHCP Relay Failure](screenshots/36-dhcp-relay-before-helper-failure.png)
-
-After configuring the relay and correcting the centralized DHCP pool, PC-HR01 successfully received:
-
-```text
-Address: 192.168.50.10
-Gateway: 192.168.50.1
-DHCP Server: 192.168.30.20
-DNS Server: 192.168.30.20
-```
-
-![DHCP Relay Verified](screenshots/37-dhcp-relay-lease-verified.png)
-
----
-
-# Access Control Between VLANs
-
-I configured an extended ACL on the Sales router subinterface to control ICMP traffic between Sales and IT.
-
-The policy allows echo replies from Sales while preventing Sales hosts from initiating ICMP echo requests toward the IT subnet.
+I created an extended ACL that allowed ICMP replies from Sales while preventing Sales devices from starting pings toward IT.
 
 ```text
 permit icmp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 echo-reply
@@ -319,756 +180,716 @@ deny   icmp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 echo
 permit ip any any
 ```
 
-The ACL is intentionally specific to ICMP. It does not block all Sales-to-IT traffic.
+Sales could not initiate the ping:
 
-Testing confirmed:
+![Sales to IT blocked](screenshots/07-acl-sales-to-it-blocked.png)
 
-```text
-IT -> Sales ping       ALLOWED
-Sales -> IT ping       BLOCKED
-```
+IT could still initiate communication toward Sales:
 
-![Sales to IT Blocked](screenshots/07-acl-sales-to-it-blocked.png)
+![IT to Sales allowed](screenshots/08-acl-it-to-sales-allowed.png)
 
-I also used ACL match counters to verify traffic was reaching the expected ACL entries.
+I checked the ACL counters afterward to make sure the traffic was actually matching the entries I expected.
 
-![ACL Match Counters](screenshots/09-acl-match-counters.png)
+![ACL match counters](screenshots/09-acl-match-counters.png)
 
----
-
-# Management VLAN and SSH
-
-I created VLAN 99 as a dedicated management network.
-
-```text
-ROUTER01 G0/0.99:     192.168.99.1
-SWITCH01 VLAN 99 SVI: 192.168.99.2
-```
-
-SWITCH01 uses the VLAN 99 SVI for remote management and has:
-
-```text
-ip default-gateway 192.168.99.1
-```
-
-I configured SSH version 2 using a local administrative account.
-
-Remote CLI access was then tested from PC-IT01.
-
-![SSH Management](screenshots/19-ssh-switch-management-verified.png)
+That was more useful than treating a successful or failed ping by itself as proof that the ACL was correct.
 
 ---
 
-# Management Access Control
+# 4. Early Troubleshooting
 
-SSH access to SWITCH01 is restricted using a standard ACL applied to the VTY lines.
+Before expanding the network, I intentionally broke several basic configurations.
+
+## Wrong VLAN
+
+I placed a Sales port in the wrong VLAN.
+
+The Sales workstation lost the connectivity I expected.
+
+![Sales network failure](screenshots/10-troubleshooting-sales-network-failure.png)
+
+I checked the switch VLAN assignments, corrected the access VLAN, and tested again.
+
+![Sales network restored](screenshots/11-troubleshooting-sales-network-restored.png)
+
+## Broken trunk
+
+I then broke the trunk between SWITCH01 and ROUTER01.
+
+Local switching could still work, but traffic that depended on the router stopped working.
+
+![Trunk failure](screenshots/12-troubleshooting-trunk-failure.png)
+
+I used the switch trunk information to identify the problem and restored trunk operation.
+
+![Trunk restored](screenshots/13-troubleshooting-trunk-restored.png)
+
+## Wrong default gateway
+
+I gave a workstation an incorrect gateway.
+
+The workstation could communicate locally but could not reach remote networks.
+
+![Default gateway failure](screenshots/14-troubleshooting-default-gateway-failure.png)
+
+After correcting the gateway from the incorrect `.254` address to the router's `.1` address, remote connectivity returned.
+
+![Default gateway restored](screenshots/15-troubleshooting-default-gateway-restored.png)
+
+These three tests helped me separate:
 
 ```text
-permit 192.168.10.0 0.0.0.255
-deny any
+Same VLAN failure     -> check Layer 2
+
+Local works,
+remote fails          -> check gateway / routing
+
+Multiple VLANs fail
+through one uplink    -> check trunking
 ```
-
-This allows hosts from the IT subnet to manage SWITCH01 while preventing other user VLANs from opening an SSH session.
-
-```text
-IT -> SWITCH01 SSH       ALLOWED
-Sales -> SWITCH01 SSH    DENIED
-```
-
-![SSH Management ACL](screenshots/20-ssh-management-access-control.png)
 
 ---
 
-# Port Security
+# 5. MAC Tables, Routing, and Switch Management
 
-I configured sticky port security on the primary user access ports on SWITCH01.
+I checked the SWITCH01 MAC address table to see which MAC addresses had been learned on each interface.
 
-The protected ports allow one learned MAC address and use the shutdown violation behavior.
+![Switch MAC address table](screenshots/16-switch-mac-address-table.png)
 
-![Port Security](screenshots/21-port-security-configured.png)
+I also checked ROUTER01's routing table.
 
-I then disconnected the authorized IT workstation from `Fa0/1` and connected an unauthorized PC.
+![Router routing table](screenshots/17-router-routing-table.png)
 
-SWITCH01 detected the unexpected MAC address and placed the interface into a secure-shutdown / err-disabled state.
+Seeing both helped connect what the switch does at Layer 2 with what the router does at Layer 3.
 
-![Port Security Violation](screenshots/22-troubleshooting-port-security-violation.png)
+## Management VLAN
 
-After reconnecting the authorized workstation, I recovered the interface with:
+I created VLAN 99 for switch management.
+
+```text
+ROUTER01:  192.168.99.1
+SWITCH01:  192.168.99.2
+```
+
+![Management VLAN verified](screenshots/18-switch-management-vlan-verified.png)
+
+I then configured SSH version 2 on SWITCH01 and tested remote CLI access from an IT workstation.
+
+![SSH management verified](screenshots/19-ssh-switch-management-verified.png)
+
+I restricted the VTY lines so management access was allowed from the IT subnet but not from user networks such as Sales.
+
+![SSH management access control](screenshots/20-ssh-management-access-control.png)
+
+---
+
+# 6. Port Security
+
+I configured sticky port security on user-facing switchports.
+
+The ports were limited to one learned MAC address and used shutdown behavior for violations.
+
+![Port security configured](screenshots/21-port-security-configured.png)
+
+To test it, I disconnected the authorized workstation and connected another device.
+
+The interface went into a security shutdown state.
+
+![Port security violation](screenshots/22-troubleshooting-port-security-violation.png)
+
+I reconnected the correct workstation and recovered the port with:
 
 ```text
 shutdown
 no shutdown
 ```
 
-and verified that the authorized client could communicate again.
+![Port security restored](screenshots/23-troubleshooting-port-security-restored.png)
 
-![Port Security Restored](screenshots/23-troubleshooting-port-security-restored.png)
+I then checked the protected access ports together.
 
-I later applied the same protection across `Fa0/1` through `Fa0/4`.
-
-![Port Security Summary](screenshots/24-access-port-security-summary.png)
+![Port security summary](screenshots/24-access-port-security-summary.png)
 
 ---
 
-# Static Routing
+# 7. Adding ROUTER02 and Static Routing
 
-I expanded the topology by adding ROUTER02 and a remote `192.168.30.0/24` network.
+I added ROUTER02 and a remote network:
 
-The point-to-point link between the routers uses:
+```text
+192.168.30.0/24
+```
+
+The router-to-router link used:
 
 ```text
 ROUTER01: 10.0.0.1/30
 ROUTER02: 10.0.0.2/30
 ```
 
-Initially ROUTER01 did not know how to reach `192.168.30.0/24`.
+At first ROUTER01 had no route to the remote LAN.
 
-PC-IT01 received a destination-unreachable response when attempting to reach the remote host.
+![Remote network unreachable](screenshots/25-static-routing-remote-network-unreachable.png)
 
-![Missing Route](screenshots/25-static-routing-remote-network-unreachable.png)
-
-I added a static route on ROUTER01:
+I added:
 
 ```text
 ip route 192.168.30.0 255.255.255.0 10.0.0.2
 ```
 
-The failure then changed from destination unreachable to request timed out.
+The error changed, but communication still failed.
 
-That change showed that the forward route now existed, but ROUTER02 still lacked a return route to the IT network.
+![Missing return route](screenshots/26-static-routing-missing-return-route.png)
 
-![Missing Return Route](screenshots/26-static-routing-missing-return-route.png)
+That change in symptoms was useful. The packet could now move in the forward direction, but ROUTER02 did not yet know how to get the response back to the IT network.
 
-After configuring return routing on ROUTER02, end-to-end connectivity worked.
+After adding the required return routing, communication worked in both directions.
 
-![Static Routing Verified](screenshots/27-static-routing-bidirectional-verified.png)
+![Static routing verified](screenshots/27-static-routing-bidirectional-verified.png)
 
----
+I used traceroute to verify the path.
 
-# Traceroute
+![Traceroute multi-router path](screenshots/28-traceroute-multi-router-path.png)
 
-I used traceroute to verify the Layer 3 path from the IT network to the remote network.
-
-```text
-1  192.168.10.1
-2  10.0.0.2
-3  192.168.30.10
-```
-
-This confirmed the expected path:
+The path was:
 
 ```text
 PC-IT01
-   ->
+   ↓
 ROUTER01
-   ->
+   ↓
 ROUTER02
-   ->
+   ↓
 PC-REMOTE01
 ```
 
-![Traceroute](screenshots/28-traceroute-multi-router-path.png)
+I also tested a default route on ROUTER02 instead of maintaining an individual return route for every network behind ROUTER01.
+
+![ROUTER02 default route](screenshots/29-router02-default-route.png)
 
 ---
 
-# Default Routing
+# 8. OSPF
 
-I tested replacing multiple specific return routes on ROUTER02 with a default route:
+After working through static routing manually, I replaced the internal static routes with OSPF.
 
 ```text
-0.0.0.0/0 -> 10.0.0.1
+ROUTER01 Router ID: 1.1.1.1
+ROUTER02 Router ID: 2.2.2.2
+Area: 0
 ```
 
-This allowed ROUTER02 to forward traffic for unknown internal destinations toward ROUTER01 without maintaining a separate static route for every VLAN.
+The routers formed a FULL adjacency.
 
-![ROUTER02 Default Route](screenshots/29-router02-default-route.png)
+![OSPF neighbor adjacency](screenshots/30-ospf-neighbor-adjacency.png)
+
+I checked the routing tables and confirmed that routes were being learned dynamically.
+
+![OSPF dynamic routes](screenshots/31-ospf-dynamic-routes.png)
+
+ROUTER01 learned the remote network behind ROUTER02.
+
+![OSPF remote route learned](screenshots/32-ospf-remote-route-learned.png)
+
+I later added:
+
+```text
+192.168.40.0/24
+```
+
+behind ROUTER02.
+
+Instead of adding another static route to ROUTER01, I advertised the new network through OSPF and confirmed that ROUTER01 learned it.
+
+![New OSPF network learned](screenshots/33-ospf-new-network-learned.png)
+
+## Breaking OSPF
+
+I deliberately created an area mismatch on the link between the two routers.
+
+IP connectivity over the transit network still existed, but the OSPF neighbor disappeared and dynamic routes were removed.
+
+![OSPF area mismatch](screenshots/34-troubleshooting-ospf-area-mismatch.png)
+
+That helped narrow the fault down to OSPF rather than cabling or interface addressing.
+
+I restored both sides to Area 0. The routers rebuilt the adjacency automatically and the learned routes returned.
+
+![OSPF restored](screenshots/35-troubleshooting-ospf-area-restored.png)
 
 ---
 
-# OSPF
+# 9. Central DHCP and DHCP Relay
 
-After demonstrating static routing, I replaced the internal static routes with OSPF.
-
-ROUTER01:
+I added a centralized DHCP and DNS server at:
 
 ```text
-Router ID: 1.1.1.1
+192.168.30.20
 ```
 
-ROUTER02:
+The HR network was on:
 
 ```text
-Router ID: 2.2.2.2
+192.168.50.0/24
 ```
 
-The routers form an adjacency over:
+Because DHCP discovery starts as a local broadcast, the HR client could not directly reach a DHCP server on another routed network.
+
+I first tested the failure.
+
+![DHCP relay failure](screenshots/36-dhcp-relay-before-helper-failure.png)
+
+On ROUTER01's HR subinterface, I configured:
 
 ```text
-10.0.0.0/30
+ip helper-address 192.168.30.20
 ```
 
-The internal OSPF networks are configured in Area 0.
+After correcting the relay and DHCP pool configuration, PC-HR01 received the correct lease.
 
-LAN interfaces are configured as passive interfaces so their networks are advertised without attempting to form OSPF neighbor relationships with user devices.
+![DHCP relay verified](screenshots/37-dhcp-relay-lease-verified.png)
 
-The routers successfully reached the `FULL` neighbor state.
+The client received:
 
-![OSPF Neighbor](screenshots/30-ospf-neighbor-adjacency.png)
-
-The routers then dynamically learned remote internal networks.
-
-![OSPF Dynamic Routes](screenshots/31-ospf-dynamic-routes.png)
-
-ROUTER01 successfully learned the remote route behind ROUTER02.
-
-![OSPF Remote Route](screenshots/32-ospf-remote-route-learned.png)
-
-I later added the `192.168.40.0/24` network to ROUTER02 and advertised it through OSPF without manually entering a new static route on ROUTER01.
-
-ROUTER01 automatically learned the new network.
-
-![New OSPF Network](screenshots/33-ospf-new-network-learned.png)
+```text
+Address:     192.168.50.10
+Gateway:     192.168.50.1
+DHCP Server: 192.168.30.20
+DNS Server:  192.168.30.20
+```
 
 ---
 
-# OSPF Troubleshooting
+# 10. Simulated Internet and PAT
 
-I deliberately created an OSPF area mismatch on the router-to-router link.
-
-ROUTER01 remained in Area 0 while ROUTER02's transit network was temporarily moved into Area 1.
-
-The physical connection and IP addressing remained available, but the OSPF adjacency disappeared.
-
-As a result, OSPF-learned remote routes disappeared from ROUTER01's routing table.
-
-![OSPF Area Mismatch](screenshots/34-troubleshooting-ospf-area-mismatch.png)
-
-Restoring both sides of the link to Area 0 caused the routers to automatically rebuild the adjacency and return to `FULL`.
-
-The dynamic routes then reappeared without being manually re-entered.
-
-![OSPF Restored](screenshots/35-troubleshooting-ospf-area-restored.png)
-
----
-
-# Simulated Internet Connection
-
-I added ISP01 and INTERNET-SERVER to simulate connectivity between the internal private network and an external network.
-
-The ISP-facing connection is:
+I added ISP01 and INTERNET-SERVER to simulate an outside network.
 
 ```text
-ROUTER01 G0/2: 203.0.113.2/30
-ISP01 G0/0:    203.0.113.1/30
+ROUTER01 G0/2:   203.0.113.2
+ISP01 G0/0:      203.0.113.1
+
+INTERNET-SERVER: 198.51.100.10
 ```
 
-The simulated Internet LAN is:
-
-```text
-ISP01 G0/1:       198.51.100.1/24
-INTERNET-SERVER:  198.51.100.10/24
-```
-
-ROUTER01 uses the following default route:
+ROUTER01 used:
 
 ```text
 0.0.0.0/0 -> 203.0.113.1
 ```
 
----
+as its default route.
 
-# NAT and PAT
+Before NAT was configured, the private internal hosts could not successfully communicate with the simulated Internet host.
 
-The internal networks use private IPv4 addresses, so I configured PAT on ROUTER01 for outbound connectivity toward the simulated Internet.
+![Before NAT](screenshots/38-nat-before-translation-failure.png)
 
-ROUTER01 uses `G0/2` as the NAT outside interface and the internal router/VLAN interfaces as NAT inside interfaces.
+I configured the internal interfaces as NAT inside and the ISP-facing interface as NAT outside, then enabled PAT overload.
 
-PAT allows multiple private hosts to share the public-facing IP address:
+Internal clients could then reach INTERNET-SERVER.
+
+![PAT Internet access verified](screenshots/39-nat-pat-internet-access-verified.png)
+
+I checked the translation table while traffic was active.
+
+![NAT translation table](screenshots/40-nat-translation-table.png)
+
+I then generated traffic from more than one inside host.
+
+![Multiple PAT clients](screenshots/41-pat-multiple-inside-hosts.png)
+
+The hosts shared:
 
 ```text
 203.0.113.2
 ```
 
-Initially external connectivity failed before NAT was configured.
-
-![Before NAT](screenshots/38-nat-before-translation-failure.png)
-
-After PAT was configured, internal clients successfully reached INTERNET-SERVER.
-
-![PAT Internet Access](screenshots/39-nat-pat-internet-access-verified.png)
-
-I used the NAT translation table to verify the private-to-public translations created by live traffic.
-
-![NAT Translation Table](screenshots/40-nat-translation-table.png)
-
-I also generated traffic from multiple internal hosts and confirmed PAT maintained separate translations while using the same public IP address.
-
-![Multiple PAT Clients](screenshots/41-pat-multiple-inside-hosts.png)
+while PAT kept their sessions separate.
 
 ---
 
-# DNS
+# 11. DNS and HTTP
 
-The centralized server at `192.168.30.20` also provides DNS service to internal clients.
+The centralized server also provided DNS to internal clients.
 
-I configured the lab domain:
-
-```text
-cobo.test
-```
-
-and created an A record for:
+I created:
 
 ```text
 www.cobo.test
 ```
 
-pointing to:
+for the simulated external website.
+
+Before the record existed, the server was reachable by IP but not by hostname.
+
+![DNS before record](screenshots/42-dns-before-record-failure.png)
+
+I also intentionally created the record with the wrong IP address.
+
+![Incorrect DNS A record](screenshots/43-troubleshooting-dns-wrong-a-record.png)
+
+That produced a different type of failure: DNS itself was answering, but it was giving the client bad information.
+
+I corrected the A record to:
 
 ```text
 198.51.100.10
 ```
 
-Before the correct DNS record existed, clients could reach the external server by IP address but could not resolve its hostname.
+![DNS record restored](screenshots/44-troubleshooting-dns-record-restored.png)
 
-![DNS Failure](screenshots/42-dns-before-record-failure.png)
-
-I also deliberately configured an incorrect A record and verified that the hostname resolved to the wrong IP address.
-
-![Incorrect DNS Record](screenshots/43-troubleshooting-dns-wrong-a-record.png)
-
-After correcting the record, `www.cobo.test` resolved to the correct address.
-
-![DNS Restored](screenshots/44-troubleshooting-dns-record-restored.png)
-
----
-
-# HTTP and DNS Integration
-
-I enabled HTTP service on INTERNET-SERVER.
-
-Internal clients were then able to browse to:
+The internal workstation could then browse to:
 
 ```text
 http://www.cobo.test
 ```
 
-instead of manually entering an IP address.
+![Website accessed through DNS](screenshots/45-http-website-via-dns-verified.png)
 
-This test combined several parts of the lab:
+I checked the NAT table and could see the TCP translation created by the HTTP session.
+
+![HTTP PAT translation](screenshots/46-pat-http-tcp-translation.png)
+
+---
+
+# 12. HR DHCP and DNS Troubleshooting
+
+The HR network gave me another chance to separate IP connectivity from service problems.
+
+At one point PC-HR01 could communicate by IP while DNS resolution failed.
+
+![HR DNS failure](screenshots/47-troubleshooting-hr-dns-failure.png)
+
+I also encountered a failed DHCP renewal while working with the centralized DHCP server.
+
+![HR DHCP renewal failure](screenshots/48-troubleshooting-hr-dhcp-renewal-failure.png)
+
+The DHCP problem was traced back to the centralized pool configuration.
+
+After correcting it, HR received the expected network settings and DNS resolution worked again.
+
+![HR DHCP and DNS restored](screenshots/49-troubleshooting-hr-dhcp-dns-restored.png)
+
+I later generated HTTP sessions from multiple internal clients and checked how PAT handled them.
+
+![Multiple HTTP clients through PAT](screenshots/50-pat-multiple-http-clients.png)
+
+---
+
+# 13. Static PAT and Port Forwarding
+
+PAT handled connections started from the inside, but I also wanted an outside device to reach one specific internal service.
+
+I added:
 
 ```text
-Client
-  ->
-DNS lookup
-  ->
-Default gateway
-  ->
-ROUTER01
-  ->
-PAT
-  ->
-ISP01
-  ->
-INTERNET-SERVER
-```
-
-![Website via DNS](screenshots/45-http-website-via-dns-verified.png)
-
-The NAT translation table also showed TCP translations created by the HTTP sessions.
-
-![HTTP PAT Translation](screenshots/46-pat-http-tcp-translation.png)
-
----
-
-# HR DHCP and DNS Troubleshooting
-
-After adding the HR network, I tested failures involving its centralized network services.
-
-PC-HR01 could initially reach the remote server by IP address while hostname resolution failed.
-
-![HR DNS Failure](screenshots/47-troubleshooting-hr-dns-failure.png)
-
-I then encountered a DHCP renewal failure while testing the centralized DHCP configuration.
-
-![HR DHCP Failure](screenshots/48-troubleshooting-hr-dhcp-renewal-failure.png)
-
-The issue was traced to the DHCP pool configuration on the centralized server.
-
-After correcting the pool, HR successfully received the expected IP address, gateway, DHCP server, and DNS server information.
-
-Hostname resolution then worked again.
-
-![HR DHCP and DNS Restored](screenshots/49-troubleshooting-hr-dhcp-dns-restored.png)
-
----
-
-# Multiple HTTP Clients Through PAT
-
-I generated HTTP traffic from multiple internal clients at the same time.
-
-ROUTER01 translated the sessions to the same public IP while keeping the individual connections separate using TCP port information.
-
-![Multiple HTTP Clients](screenshots/50-pat-multiple-http-clients.png)
-
-This demonstrated how PAT allows many internal devices to share one public IPv4 address while still maintaining separate sessions.
-
----
-
-# Static PAT and Port Forwarding
-
-Outbound PAT allows internal users to initiate connections toward the Internet.
-
-I also wanted to demonstrate the opposite direction: allowing an outside host to reach one specifically published internal service.
-
-I added INTERNAL-WEB:
-
-```text
+INTERNAL-WEB
 192.168.10.20
 ```
 
-and configured a static TCP translation:
+Before publishing the service, INTERNET-SERVER could not connect to it through ROUTER01's public-facing address.
+
+![Port forwarding failure](screenshots/51-static-pat-before-port-forward-failure.png)
+
+I configured a static TCP mapping:
 
 ```text
-192.168.10.20:80
-        <->
 203.0.113.2:80
+        ↕
+192.168.10.20:80
 ```
 
-Before the port-forwarding rule existed, INTERNET-SERVER could not open the internal website using ROUTER01's public-facing address.
+I checked the translation table first.
 
-![Before Port Forwarding](screenshots/51-static-pat-before-port-forward-failure.png)
+![Static PAT translation table](screenshots/52-static-pat-translation-table.png)
 
-After configuring static PAT, I checked the NAT translation table and confirmed the permanent TCP mapping between ROUTER01's public address and INTERNAL-WEB.
-
-![Static PAT Translation Table](screenshots/52-static-pat-translation-table.png)
-
-Browsing to:
+Then I tested from outside:
 
 ```text
 http://203.0.113.2
 ```
 
-from the outside then reached:
+The request reached the internal web server.
 
-```text
-192.168.10.20:80
-```
-
-inside the network.
-
-![Static PAT Verified](screenshots/53-static-pat-port-forward-verified.png)
+![Static PAT verified](screenshots/53-static-pat-port-forward-verified.png)
 
 ---
 
-# Internet-Edge ACL
+# 14. Internet-Edge ACL
 
-Publishing an internal HTTP service does not mean every type of unsolicited outside traffic should be accepted.
+Publishing port 80 did not mean I wanted all outside traffic accepted.
 
-I created an inbound extended ACL on ROUTER01's ISP-facing `G0/2` interface.
+Before applying the edge ACL, the external host could ping ROUTER01's public-facing interface.
 
-The policy permits:
+![Outside ICMP allowed before ACL](screenshots/54-outside-icmp-before-acl-allowed.png)
 
-```text
-HTTP to 203.0.113.2:80
-Established TCP return traffic
-ICMP echo replies
-ICMP unreachable messages
-```
+I applied an inbound extended ACL to the ISP-facing interface.
 
-and denies other unmatched inbound IP traffic.
+The rules were intended to allow the traffic needed for the published HTTP service and established return traffic while rejecting other unsolicited traffic.
 
-Before applying the ACL, INTERNET-SERVER could ping ROUTER01's public-facing address.
+Afterward, outside-initiated ICMP was blocked.
 
-![Outside ICMP Before ACL](screenshots/54-outside-icmp-before-acl-allowed.png)
+![Outside ICMP blocked](screenshots/55-outside-acl-icmp-blocked.png)
 
-After applying the ACL, outside-initiated ping traffic was blocked.
+The published website still worked.
 
-![Outside ICMP Blocked](screenshots/55-outside-acl-icmp-blocked.png)
+![Outside HTTP still allowed](screenshots/56-outside-acl-http-allowed.png)
 
-The deliberately published HTTP service still worked.
+I checked the ACL counters to confirm that traffic was hitting the expected entries.
 
-![HTTP Still Allowed](screenshots/56-outside-acl-http-allowed.png)
+![Outside ACL counters](screenshots/57-outside-acl-match-counters.png)
 
-ACL match counters showed traffic reaching the expected permit and deny entries.
-
-![Outside ACL Counters](screenshots/57-outside-acl-match-counters.png)
-
-This demonstrated the difference between publishing a specific service and broadly allowing unsolicited inbound traffic.
+This was a good example of why I did not want to use a broad "allow outside traffic" rule just to make port forwarding work.
 
 ---
 
-# STP and Layer 2 Redundancy
+# 15. STP and Redundant Switch Links
 
-To finish the switching portion of the lab, I added SWITCH03 and connected it to SWITCH01 with two trunks:
+For the last major addition, I connected SWITCH03 to SWITCH01 using two trunk links.
 
 ```text
 SWITCH01 Fa0/23 <-> SWITCH03 Fa0/23
 SWITCH01 Fa0/24 <-> SWITCH03 Fa0/24
 ```
 
-Two simultaneously forwarding Layer 2 paths between the same switches could create a switching loop.
+Without Spanning Tree Protocol, two active Layer 2 paths between the same switches could form a switching loop.
 
-I configured SWITCH01 as the STP root for:
+I configured SWITCH01 as the STP root for the lab VLANs.
 
-```text
-VLAN 10
-VLAN 20
-VLAN 50
-VLAN 99
-```
+On SWITCH03, one link forwarded and the second stayed blocked as the backup path.
 
-On SWITCH03, STP selected one trunk as the forwarding root port and placed the redundant interface into the alternate blocking role.
+![STP redundant link blocked](screenshots/58-stp-redundant-link-blocked.png)
 
-```text
-Fa0/23 -> Root FWD
-Fa0/24 -> Altn BLK
-```
+I disconnected the active trunk.
 
-![STP Blocking Redundant Link](screenshots/58-stp-redundant-link-blocked.png)
+STP moved the backup interface into the forwarding role.
 
-I then disconnected the active `Fa0/23` trunk.
+![STP backup link takeover](screenshots/59-stp-backup-link-takeover.png)
 
-STP automatically transitioned `Fa0/24` into the forwarding role.
+PC-STP01 remained able to reach its gateway through the alternate path.
 
-![STP Backup Takeover](screenshots/59-stp-backup-link-takeover.png)
+![STP failover connectivity](screenshots/60-stp-failover-connectivity-verified.png)
 
-PC-STP01 remained able to reach the VLAN 10 gateway through the backup path.
+After reconnecting the original trunk, STP reconverged and returned the network to one forwarding link and one backup link.
 
-![STP Failover Connectivity](screenshots/60-stp-failover-connectivity-verified.png)
+![STP redundancy restored](screenshots/61-stp-redundancy-restored.png)
 
-After reconnecting `Fa0/23`, STP reconverged and restored the redundant topology with one forwarding path and one blocked backup path.
-
-![STP Redundancy Restored](screenshots/61-stp-redundancy-restored.png)
+This was more useful than only looking at the STP table because I actually removed the active path and confirmed that client traffic survived.
 
 ---
 
-# Troubleshooting Scenarios
+# 16. Final Validation
 
-Troubleshooting was a major part of this project.
+After all of the later changes, I went back through the network to make sure earlier parts of the lab still worked.
 
-Instead of only configuring a working network, I intentionally introduced or encountered failures and worked through the symptoms before applying a fix.
+I verified HR addressing and centralized services.
 
-| Scenario | Symptom | Diagnosis / Fix |
-| --- | --- | --- |
-| Wrong Sales VLAN | Local Sales connectivity and gateway failed | Found incorrect access VLAN with `show vlan brief`; restored VLAN 20 |
-| Broken trunk | Same-VLAN traffic worked but gateway and remote traffic failed | `show interfaces trunk` showed trunk missing; restored trunk mode |
-| Incorrect default gateway | Local traffic worked but remote traffic failed | Corrected workstation gateway from `.254` to `.1` |
-| Port security violation | Access port became err-disabled | Identified unauthorized MAC; reconnected authorized host and reset interface |
-| Missing static route | ROUTER01 returned destination unreachable | Added forward route toward ROUTER02 |
-| Missing return route | Ping changed to request timed out | Added return routing on ROUTER02 |
-| OSPF area mismatch | Physical link worked but OSPF neighbor disappeared | Compared OSPF configuration and restored matching Area 0 |
-| Missing DHCP relay | Remote DHCP server could not serve HR | Added `ip helper-address` on the HR interface |
-| Incorrect DHCP scope | HR DHCP request failed | Corrected centralized DHCP pool |
-| Missing DNS record | IP connectivity worked but hostname failed | Added correct DNS record |
-| Wrong DNS A record | Hostname resolved to the wrong address | Corrected record to `198.51.100.10` |
-| NAT not configured | Private clients could not reach the Internet server | Configured NAT inside/outside and PAT overload |
-| Missing static PAT | Outside HTTP connection failed | Published `192.168.10.20:80` through `203.0.113.2:80` |
-| Outside ACL | Outside ping blocked while published HTTP remained reachable | Used protocol/port-specific inbound ACL entries |
-| STP link failure | Primary switch trunk disconnected | STP automatically activated the redundant path |
+![HR final validation](screenshots/62-final-validation-hr-services.png)
 
-A useful troubleshooting pattern throughout the lab was narrowing the problem based on what still worked.
+On ROUTER01, I checked OSPF and routing again.
 
-```text
-Same subnet works, remote subnet fails
--> investigate gateway or routing
+![OSPF and routing final validation](screenshots/63-final-validation-ospf-routing.png)
 
-Same VLAN fails
--> investigate Layer 2 first
-
-Direct router-to-router connectivity works, OSPF neighbor is missing
--> investigate OSPF rather than the physical link
-
-IP address works, hostname fails
--> investigate DNS
-
-Forward route added but ping still times out
--> investigate the return path
-```
-
----
-
-# MAC Address and ARP Verification
-
-I used the switch MAC address table to verify how SWITCH01 learned client MAC addresses and associated them with individual switchports.
-
-![MAC Address Table](screenshots/16-switch-mac-address-table.png)
-
-I also inspected ROUTER01's routing and address-resolution information to connect Layer 2 forwarding with Layer 3 routing decisions.
-
-![Routing Verification](screenshots/17-router-routing-table.png)
-
-This helped reinforce the distinction between:
-
-```text
-IP destination  = final Layer 3 destination
-MAC destination = next Layer 2 hop on the local network
-```
-
----
-
-# Final Validation
-
-After the network build was complete, I performed a final validation rather than assuming earlier configurations still worked after later changes.
-
-The HR workstation was used to verify centralized DHCP, DNS, and end-to-end connectivity.
-
-![HR Final Validation](screenshots/62-final-validation-hr-services.png)
-
-ROUTER01 was checked for:
-
-- OSPF neighbor state
-- OSPF-learned routes
-- Default routing
-- NAT configuration and translations
-- Outside ACL configuration and counters
-
-![Routing Final Validation](screenshots/63-final-validation-ospf-routing.png)
-
-PC-IT01 then successfully opened an SSH session to SWITCH01 at:
+I also opened an SSH session from the IT workstation to SWITCH01's management address:
 
 ```text
 192.168.99.2
 ```
 
-and executed switch commands remotely.
+![SSH final validation](screenshots/64-final-validation-ssh-management.png)
 
-![SSH Final Validation](screenshots/64-final-validation-ssh-management.png)
-
----
-
-# Screenshot Evidence
-
-The `screenshots` directory contains the complete build and troubleshooting history.
-
-| Screenshots | Topic |
-| --- | --- |
-| 01–09 | Initial topology, VLANs, inter-VLAN routing, DHCP, ACLs |
-| 10–15 | VLAN, trunk, and default-gateway troubleshooting |
-| 16–20 | MAC/routing verification, management VLAN, SSH, management ACL |
-| 21–24 | Port security configuration, violation, and recovery |
-| 25–29 | Static routing, missing return route, traceroute, default route |
-| 30–35 | OSPF adjacency, dynamic routes, new network advertisement, area mismatch |
-| 36–37 | DHCP relay |
-| 38–41 | NAT/PAT and Internet connectivity |
-| 42–46 | DNS, HTTP, and TCP PAT translations |
-| 47–50 | HR DHCP/DNS troubleshooting and multiple HTTP clients |
-| 51–53 | Static PAT, translation table, and inbound port forwarding |
-| 54–57 | Outside ACL testing and match counters |
-| 58–61 | STP redundancy, failover, and recovery |
-| 62–64 | Final end-to-end validation |
+That gave me a final check of switching, routing, network services, and management connectivity after the topology had been expanded several times.
 
 ---
 
-# Skills Demonstrated
+# Problems I Worked Through
+
+Some of the most useful parts of this lab were the configurations that did not work the first time.
+
+| Problem | What helped narrow it down |
+|---|---|
+| Sales workstation placed in wrong VLAN | Layer 2 connectivity and VLAN membership did not match the design |
+| Trunk disabled | Multiple VLANs lost access through the same router link |
+| Wrong default gateway | Local communication worked but remote communication failed |
+| Port security violation | Interface entered a security shutdown state after the MAC changed |
+| Missing forward route | ROUTER01 returned destination unreachable |
+| Missing return route | Forward routing improved, but replies could not get back |
+| OSPF area mismatch | Transit IP connectivity worked while the OSPF neighbor disappeared |
+| Missing DHCP relay | HR broadcasts could not reach the remote DHCP server |
+| Incorrect DHCP pool | Relay was present, but the server could not provide the expected lease |
+| Missing DNS record | Server worked by IP but not hostname |
+| Wrong DNS record | DNS responded, but returned the wrong destination |
+| Missing NAT | Internal private hosts could not reach the simulated Internet |
+| Missing static PAT | Outside clients could not reach the internal web service |
+| Edge ACL | Ping was blocked while the explicitly published HTTP service remained available |
+| STP link failure | The backup trunk moved into forwarding state automatically |
+
+The troubleshooting approach I ended up using most often was:
+
+```text
+Start with what still works
+        ↓
+Decide whether the problem is
+Layer 2, Layer 3, or a service
+        ↓
+Check the relevant device state
+        ↓
+Change one thing
+        ↓
+Test again
+```
+
+---
+
+# Commands I Used Frequently
 
 ## Switching
 
-- VLAN configuration
-- Access-port assignment
-- 802.1Q trunking
-- MAC address table verification
-- Management SVI configuration
-- STP root selection
-- Redundant trunk links
-- STP failover
-- Sticky port security
-- Err-disabled port recovery
+```text
+show vlan brief
+show interfaces trunk
+show mac address-table
+show port-security
+show spanning-tree
+```
 
 ## Routing
 
-- Router-on-a-stick
-- Inter-VLAN routing
-- IPv4 addressing
-- `/24` and `/30` subnetting
-- Static routing
-- Return-path troubleshooting
-- Default routing
-- Traceroute analysis
-- OSPF neighbor formation
-- OSPF route learning
-- Passive interfaces
-- OSPF area troubleshooting
+```text
+show ip interface brief
+show ip route
+show ip ospf neighbor
+show ip protocols
+traceroute
+```
 
-## Network Services
+## ACLs
 
-- DHCP pools
-- DHCP excluded addresses
-- Centralized DHCP
-- DHCP relay
-- DNS
-- A records
-- HTTP services
-- SSH management
-
-## Security
-
-- Standard ACLs
-- Extended ACLs
-- VTY access restrictions
-- Department-specific ICMP filtering
-- Internet-edge ACL filtering
-- Port security
-- Static PAT
-- Controlled inbound service publishing
+```text
+show access-lists
+show ip interface
+```
 
 ## NAT
 
-- NAT inside/outside designation
-- PAT overload
-- Multiple internal hosts sharing one public address
-- NAT translation table verification
-- TCP translation verification
-- Static TCP port forwarding
+```text
+show ip nat translations
+show ip nat statistics
+```
 
-## Troubleshooting
+## DHCP
 
-- Layer 2 vs. Layer 3 fault isolation
-- VLAN misconfiguration
-- Trunk failure
-- Incorrect default gateway
-- Port-security violation
-- Missing forward route
-- Missing return route
-- OSPF adjacency failure
-- DHCP relay failure
-- DHCP scope failure
-- DNS record failure
-- NAT failure
-- Static PAT failure
-- ACL verification
-- STP failover testing
+```text
+show ip dhcp binding
+show ip dhcp pool
+```
+
+These commands were usually more useful to me than immediately reopening the configuration because they showed what the device was actually doing at that moment.
 
 ---
 
-# Key Lessons From the Lab
+# What I Took Away From the Lab
 
-One of the biggest lessons from this project was that successful troubleshooting depends on understanding where a packet should travel and identifying the first place where expected behavior stops.
+The biggest improvement for me was getting more comfortable following a packet through the network instead of treating every failed ping as the same problem.
 
-A few concepts became much clearer while building the lab:
+For example:
 
-- Hosts in the same subnet can communicate directly through Layer 2 switching.
-- Traffic for a different subnet must be sent to a default gateway.
-- ARP resolves a local IPv4 next-hop address to a MAC address.
-- VLANs create separate Layer 2 broadcast domains.
-- 802.1Q trunking allows multiple VLANs to share one physical link while remaining logically separated.
-- Router-on-a-stick uses tagged subinterfaces to route multiple VLANs through one physical router interface.
-- Routers do not automatically know how to reach remote networks.
-- Routing must work in both the forward and return directions.
-- OSPF can dynamically replace many manually maintained static routes.
-- DHCP broadcasts require a relay when the DHCP server is on another subnet.
-- PAT allows multiple private hosts to share one public IPv4 address.
-- Static PAT can publish a specific internal service to an outside network.
-- ACL order matters because the first matching entry determines what happens to a packet.
-- STP prevents Layer 2 loops while still allowing redundant physical connections.
-- A failed test is useful when I understand why the result changed after each configuration change.
+```text
+Client
+  ↓
+Access port / VLAN
+  ↓
+Switching
+  ↓
+Default gateway
+  ↓
+Routing table
+  ↓
+ACL
+  ↓
+NAT
+  ↓
+Next router
+  ↓
+Destination
+```
+
+If the client could communicate within its own VLAN but not outside it, I knew not to start by troubleshooting basic switching.
+
+If an IP address worked but a hostname did not, I checked DNS.
+
+If a forward route existed but the ping still failed, I checked whether the other side had a return route.
+
+If the two routers could ping each other but OSPF was not forming an adjacency, I focused on OSPF rather than the physical link.
+
+The project also made the difference between configuration and verification clearer to me. A command being present in the running configuration does not necessarily mean traffic is behaving the way I intended. I used routing tables, neighbor states, ACL counters, NAT translations, DHCP leases, traceroute, and actual client traffic to verify the results.
 
 ---
 
-# Lab Status
+# Skills Used
 
-**Complete**
+- Cisco IOS
+- VLAN configuration
+- 802.1Q trunking
+- Router-on-a-stick
+- Inter-VLAN routing
+- IPv4 addressing and subnetting
+- DHCP
+- DHCP relay
+- DNS
+- Static routing
+- Default routing
+- OSPF
+- Route troubleshooting
+- NAT
+- PAT
+- Static PAT
+- Port forwarding
+- Standard ACLs
+- Extended ACLs
+- SSH management
+- VTY restrictions
+- Port security
+- MAC address table analysis
+- ARP and next-hop troubleshooting
+- HTTP testing
+- STP
+- Layer 2 redundancy
+- Layer 2 troubleshooting
+- Layer 3 troubleshooting
 
-The final Packet Tracer file, six Cisco device configurations, troubleshooting evidence, and final validation screenshots are included in this repository.
+---
 
-The project focuses on foundational switching, routing, network services, security, and troubleshooting while showing the progression from a basic segmented LAN into a larger multi-router network with centralized services, simulated Internet connectivity, security controls, and Layer 2 redundancy.
+# Repository Structure
+
+```text
+PacketTracerLab/
+│
+├── README.md
+├── packet_tracer_networking_lab.pkt
+│
+├── Configs/
+│   ├── ISP01.txt
+│   ├── ROUTER01.txt
+│   ├── ROUTER02.txt
+│   ├── SWITCH01.txt
+│   ├── SWITCH02.txt
+│   ├── SWITCH03.txt
+│   └── readme.md
+│
+└── screenshots/
+    ├── 01-network-topology.png
+    ├── 02-vlan-configuration.png
+    ├── 03-vlan-connectivity-test.png
+    ├── ...
+    ├── 62-final-validation-hr-services.png
+    ├── 63-final-validation-ospf-routing.png
+    └── 64-final-validation-ssh-management.png
+```
+
+---
+
+# Status
+
+**Completed**
+
+The finished lab contains the Packet Tracer topology, exported configurations for all six Cisco devices, and 64 screenshots covering the build, troubleshooting, failover tests, and final validation.
