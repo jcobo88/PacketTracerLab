@@ -2,7 +2,7 @@
 
 ## Overview
 
-I built this lab to practice configuring and troubleshooting a network that grew beyond a basic router-and-switch exercise.
+I built this lab to practice configuring and troubleshooting a network that grew beyond a basic router and switch exercise.
 
 I started with two VLANs on a single switch and router. As I worked through the lab, I added more networks, a second router, centralized DHCP and DNS, OSPF, NAT/PAT, an ISP connection, SSH management, ACLs, port security, an internal web server, and redundant switch links with STP.
 
