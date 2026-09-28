@@ -21,7 +21,7 @@ I also intentionally broke working configurations along the way. I wanted to get
 - Default routes
 - OSPF
 - NAT and PAT
-- Static PAT / port forwarding
+- Static PAT and port forwarding
 - Standard and extended ACLs
 - SSH management
 - Port security
@@ -47,42 +47,58 @@ The repository includes the completed Packet Tracer topology and the running con
 
 ## Final Network
 
-![Final network topology](screenshots/01-network-topology.png)
+![Final network topology](screenshots/final-network-topology.png)
 
-The finished network contains four internal VLANs, two internal routers, a simulated ISP, two remote networks, centralized DHCP and DNS services, internal and external web servers, and redundant Layer 2 links.
+This is the completed Packet Tracer topology after the routing, switching, security, network-service, and redundancy work was added.
 
 ```text
-                          INTERNET-SERVER
-                           198.51.100.10
-                                  |
-                               ISP01
-                           203.0.113.1
-                                  |
-                           203.0.113.0/30
-                                  |
-                           203.0.113.2
-                             ROUTER01
-                         /             \
-                802.1Q trunk          10.0.0.1
-                    |                   |
-                 SWITCH01          10.0.0.0/30
-              /     |     |             |
-           VLAN10 VLAN20 VLAN50      10.0.0.2
-               IT   SALES   HR        ROUTER02
-                                     /       \
-                             192.168.30.0    192.168.40.0
-                                   |
-                            DHCP / DNS Server
-                              192.168.30.20
-
-                   SWITCH01
-                      |
-            two redundant trunks
-                      |
-                   SWITCH03
-                      |
-                  PC-STP01
+                                   PC-STP01
+                                      |
+                                   SWITCH03
+                                     ||
+                              redundant trunks
+                                     ||
+                                  SWITCH01
+                    _____________/  |  \_____________
+                   /                |                \
+             IT / Sales / HR    INTERNAL-WEB      ROUTER01
+                                                   /      \
+                                          10.0.0.0/30    ISP01
+                                                |           |
+                                             ROUTER02   INTERNET-SERVER
+                                             /      \
+                                  192.168.30.0/24   192.168.40.0/24
+                                         |                |
+                                      SWITCH02        PC-REMOTE02
+                                      /      \
+                             PC-REMOTE01   DHCP/DNS SERVER
 ```
+
+The main LAN behind SWITCH01 contains:
+
+```text
+PC-IT01
+PC-IT02
+PC-SALES01
+PC-SALES02
+PC-HR01
+INTERNAL-WEB
+```
+
+SWITCH03 is connected to SWITCH01 with two redundant trunk links and provides connectivity to `PC-STP01`.
+
+ROUTER02 connects to two remote networks:
+
+```text
+192.168.30.0/24
+    ├── PC-REMOTE01
+    └── DHCP/DNS SERVER
+
+192.168.40.0/24
+    └── PC-REMOTE02
+```
+
+ROUTER01 also connects to ISP01, which provides access to the simulated external network containing `INTERNET-SERVER`.
 
 ---
 
@@ -94,10 +110,10 @@ The finished network contains four internal VLANs, two internal routers, a simul
 | `192.168.20.0/24` | Sales | `192.168.20.1` |
 | `192.168.50.0/24` | HR | `192.168.50.1` |
 | `192.168.99.0/24` | Management | `192.168.99.1` |
-| `10.0.0.0/30` | ROUTER01 ↔ ROUTER02 | Point-to-point |
+| `10.0.0.0/30` | ROUTER01 to ROUTER02 | Point-to-point |
 | `192.168.30.0/24` | Remote LAN / Services | `192.168.30.1` |
 | `192.168.40.0/24` | Second Remote LAN | `192.168.40.1` |
-| `203.0.113.0/30` | ROUTER01 ↔ ISP01 | Point-to-point |
+| `203.0.113.0/30` | ROUTER01 to ISP01 | Point-to-point |
 | `198.51.100.0/24` | Simulated Internet | `198.51.100.1` |
 
 Important infrastructure addresses:
@@ -113,7 +129,11 @@ INTERNET-SERVER:      198.51.100.10
 
 # 1. VLANs and Inter-VLAN Routing
 
-I started by separating IT and Sales into different VLANs and later added HR and Management.
+The lab originally started with a much smaller topology.
+
+![Original network topology](screenshots/01-network-topology.png)
+
+I separated IT and Sales into different VLANs and later added HR and Management.
 
 ```text
 VLAN 10 - IT
@@ -239,13 +259,14 @@ After correcting the gateway from the incorrect `.254` address to the router's `
 These three tests helped me separate:
 
 ```text
-Same VLAN failure     -> check Layer 2
+Same VLAN failure
+-> check Layer 2
 
-Local works,
-remote fails          -> check gateway / routing
+Local works, remote fails
+-> check gateway or routing
 
-Multiple VLANs fail
-through one uplink    -> check trunking
+Multiple VLANs fail through one uplink
+-> check trunking
 ```
 
 ---
@@ -638,7 +659,7 @@ I checked the ACL counters to confirm that traffic was hitting the expected entr
 
 ![Outside ACL counters](screenshots/57-outside-acl-match-counters.png)
 
-This was a good example of why I did not want to use a broad "allow outside traffic" rule just to make port forwarding work.
+This was a good example of why I did not want to use a broad allow rule just to make port forwarding work.
 
 ---
 
@@ -877,6 +898,7 @@ PacketTracerLab/
 │   └── readme.md
 │
 └── screenshots/
+    ├── final-network-topology.png
     ├── 01-network-topology.png
     ├── 02-vlan-configuration.png
     ├── 03-vlan-connectivity-test.png
@@ -892,4 +914,4 @@ PacketTracerLab/
 
 **Completed**
 
-The finished lab contains the Packet Tracer topology, exported configurations for all six Cisco devices, and 64 screenshots covering the build, troubleshooting, failover tests, and final validation.
+The finished lab contains the Packet Tracer topology, exported configurations for all six Cisco devices, a final topology overview, and 64 numbered screenshots covering the build, troubleshooting, failover tests, and final validation.
