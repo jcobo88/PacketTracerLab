@@ -8,6 +8,27 @@ I started with two VLANs on a single switch and router. As I worked through the 
 
 I also intentionally broke working configurations along the way. I wanted to get used to looking at the symptoms first and figuring out whether a problem was at Layer 2, Layer 3, routing, DNS, DHCP, NAT, or access control instead of immediately changing configuration.
 
+### Recruiter Snapshot
+
+| Capability | Verified hands-on work |
+|---|---|
+| Network segmentation | Configured VLANs, 802.1Q trunks, router-on-a-stick inter-VLAN routing, and a dedicated management VLAN |
+| Routing | Built and tested static routes, a default route, and multi-router OSPF Area 0; diagnosed and corrected an intentional OSPF area mismatch |
+| Network services | Configured DHCP, centralized DHCP relay with `ip helper-address`, DNS records, and HTTP connectivity |
+| Internet edge | Implemented a simulated ISP connection, default routing, dynamic PAT, static PAT for a published web service, and an inbound edge ACL |
+| Secure management | Configured SSH version 2, restricted VTY access to the IT subnet, and used sticky port security on access ports |
+| Resilience | Built redundant switch trunks with STP, disconnected the active path, and verified that the alternate link forwarded client traffic |
+| Troubleshooting | Isolated wrong VLAN, broken trunk, incorrect gateway, missing return route, DHCP pool, DNS record, NAT, ACL, port security, OSPF, and link-failure issues |
+
+### Relevance to Junior Networking and IT Support
+
+- Demonstrates a structured troubleshooting approach across Layer 2, Layer 3, routing, DHCP, DNS, NAT, and access control.
+- Verifies behavior with operational data, including VLAN and trunk state, MAC tables, routing tables, OSPF neighbors, ACL counters, NAT translations, DHCP leases, traceroute, and client connectivity tests.
+- Shows the difference between configuration and validation. Features were tested with controlled failures and restored only after the expected device state and end-user connectivity were confirmed.
+- Provides reviewable artifacts through the Packet Tracer file, exported running configurations for six Cisco devices, a final topology diagram, and 64 numbered screenshots.
+
+> **Scope:** This project was completed in Cisco Packet Tracer. It demonstrates hands-on configuration and troubleshooting in a simulated environment, not administration of a production network.
+
 ### Main areas covered
 
 - VLANs
